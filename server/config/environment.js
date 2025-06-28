@@ -1,8 +1,7 @@
-import dotenv from 'dotenv';
+// Load environment variables
+require('dotenv').config();
 
-dotenv.config();
-
-export const config = {
+const config = {
   port: process.env.PORT || 3001,
   groqApiKey: process.env.GROQ_API_KEY,
   scrapingdogApiKey: process.env.SCRAPINGDOG_API_KEY,
@@ -10,7 +9,7 @@ export const config = {
 };
 
 // Validate required environment variables
-export function validateEnvironment() {
+function validateEnvironment() {
   const requiredVars = [
     { name: 'GROQ_API_KEY', value: process.env.GROQ_API_KEY },
     { name: 'SCRAPINGDOG_API_KEY', value: process.env.SCRAPINGDOG_API_KEY }
@@ -26,3 +25,5 @@ export function validateEnvironment() {
   
   console.log('✅ Environment variables validated successfully');
 }
+
+module.exports = { config, validateEnvironment };
