@@ -12,9 +12,12 @@ const llmRoutes = require('./routes/llmRoutes');
 const statisticsRoutes = require('./routes/statisticsRoutes');
 
 // Import environment configuration
-const { PORT, NODE_ENV } = require('./config/environment');
+const { config, validateEnvironment } = require('./config/environment');
 
 const app = express();
+
+// Validate environment variables (but don't exit on failure)
+validateEnvironment();
 
 // Middleware
 app.use(cors());
@@ -37,13 +40,13 @@ app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({ 
     error: 'Internal server error',
-    message: NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    message: config.nodeEnv === 'development' ? err.message : 'Something went wrong'
   });
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} in ${NODE_ENV} mode`);
+app.listen(config.port, () => {
+  console.log(`Server running on port ${config.port} in ${config.nodeEnv} mode`);
   console.log(`Environment variables loaded:`, {
     GROQ_API_KEY: process.env.GROQ_API_KEY ? 'Set' : 'Not set',
     SCRAPINGDOG_API_KEY: process.env.SCRAPINGDOG_API_KEY ? 'Set' : 'Not set'

@@ -18,12 +18,13 @@ function validateEnvironment() {
   const missing = requiredVars.filter(({ value }) => !value || value.trim() === '');
   
   if (missing.length > 0) {
-    console.error(`❌ Missing or empty required environment variables: ${missing.map(v => v.name).join(', ')}`);
-    console.error('Please check your .env file and ensure these variables are set with valid values.');
-    process.exit(1);
+    console.warn(`⚠️  Missing or empty environment variables: ${missing.map(v => v.name).join(', ')}`);
+    console.warn('Some features may not work properly. Please check your .env file.');
+    return false;
   }
   
   console.log('✅ Environment variables validated successfully');
+  return true;
 }
 
 module.exports = { config, validateEnvironment };
