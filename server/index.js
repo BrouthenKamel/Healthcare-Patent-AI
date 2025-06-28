@@ -1,50 +1,62 @@
-import express from 'express';
-import cors from 'cors';
-import { config, validateEnvironment } from './config/environment.js';
-import { GroqService } from './services/groqService.js';
-import { PatentDatabase } from './services/patentDatabase.js';
-import { PatentSearchService } from './services/patentSearchService.js';
-import { createHealthRoutes } from './routes/healthRoutes.js';
-import { createPatentRoutes } from './routes/patentRoutes.js';
-import { createStatisticsRoutes } from './routes/statisticsRoutes.js';
-import { createLLMRoutes } from './routes/llmRoutes.js';
+// Load environment variables first, before any other imports
+require('dotenv').config();
 
-// Validate environment variables
-validateEnvironment();
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+
+// Import routes
+const healthRoutes = require('./routes/healthRoutes');
+const patentRoutes = require('./routes/patentRoutes');
+const llmRoutes = require('./routes/llmRoutes');
+const statisticsRoutes = require('./routes/statisticsRoutes');
+
+// Import environment configuration
+const { PORT, NODE_ENV } = require('./config/environment');
 
 const app = express();
-
-// Debug environment variables
-console.log('🔍 Environment Variables Debug:');
-console.log('- NODE_ENV:', config.nodeEnv);
-console.log('- GROQ_API_KEY exists:', !!config.groqApiKey);
-console.log('- SCRAPINGDOG_API_KEY exists:', !!config.scrapingdogApiKey);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Initialize services
-const groqService = new GroqService();
-const patentDatabase = new PatentDatabase();
-const patentSearchService = new PatentSearchService(groqService, patentDatabase);
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // Routes
-app.use('/api/health', createHealthRoutes(patentDatabase));
-app.use('/api', createPatentRoutes(patentSearchService, patentDatabase));
-app.use('/api/statistics', createStatisticsRoutes(patentDatabase));
-app.use('/api/llm', createLLMRoutes(groqService));
+app.use('/api', healthRoutes);
+app.use('/api', patentRoutes);
+app.use('/api', llmRoutes);
+app.use('/api', statisticsRoutes);
 
-// Error handling middleware
-app.use((error, req, res, next) => {
-  console.error('💥 Healthcare server error:', error);
-  res.status(500).json({ error: 'Internal healthcare server error' });
+// Serve React app for all other routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-app.listen(config.port, () => {
-  console.log(`🏥 Healthcare Patent Search API server running on port ${config.port}`);
-  console.log(`📡 ScrapingDog API integration: ACTIVE`);
-  console.log(`🧠 Groq AI healthcare integration: ACTIVE`);
-  console.log(`💾 Healthcare in-memory database: ACTIVE`);
-  console.log(`🔍 Ready to search healthcare patents and generate AI clinical insights!`);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ 
+    error: 'Internal server error',
+    message: NODE_ENV === 'development' ? err.message : 'Something went wrong'
+  });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT} in ${NODE_ENV} mode`);
+  console.log(`Environment variables loaded:`, {
+    GROQ_API_KEY: process.env.GROQ_API_KEY ? 'Set' : 'Not set',
+    SCRAPINGDOG_API_KEY: process.env.SCRAPINGDOG_API_KEY ? 'Set' : 'Not set'
+  });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
