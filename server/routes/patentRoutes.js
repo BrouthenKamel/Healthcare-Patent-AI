@@ -1,8 +1,8 @@
-import express from 'express';
+const express = require('express');
 
 const router = express.Router();
 
-export function createPatentRoutes(patentSearchService, patentDatabase) {
+function createPatentRoutes(patentSearchService, patentDatabase) {
   router.post('/search-patents', async (req, res) => {
     try {
       const { query, filters = {} } = req.body;
@@ -103,3 +103,5 @@ export function createPatentRoutes(patentSearchService, patentDatabase) {
 
   return router;
 }
+
+module.exports = { createPatentRoutes };

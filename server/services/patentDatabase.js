@@ -1,4 +1,4 @@
-export class PatentDatabase {
+class PatentDatabase {
   constructor() {
     this.patents = new Map(); // Using Map for O(1) lookups by publication_number
     this.searchHistory = [];
@@ -181,3 +181,5 @@ export class PatentDatabase {
     return this.searchHistory.slice(-10); // Last 10 searches
   }
 }
+
+module.exports = { PatentDatabase };

@@ -1,12 +1,10 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
-
-dotenv.config();
+const axios = require('axios');
+require('dotenv').config();
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-export class GroqService {
+class GroqService {
   constructor() {
     if (!GROQ_API_KEY) {
       throw new Error('GROQ_API_KEY is required but not found in environment variables');
@@ -241,3 +239,5 @@ Focus on realistic healthcare commercialization insights based on current medica
     }
   }
 }
+
+module.exports = { GroqService };

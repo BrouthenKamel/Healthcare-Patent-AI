@@ -1,8 +1,8 @@
-import express from 'express';
+const express = require('express');
 
 const router = express.Router();
 
-export function createStatisticsRoutes(patentDatabase) {
+function createStatisticsRoutes(patentDatabase) {
   router.get('/', (req, res) => {
     try {
       const stats = patentDatabase.getStatistics();
@@ -25,3 +25,5 @@ export function createStatisticsRoutes(patentDatabase) {
 
   return router;
 }
+
+module.exports = { createStatisticsRoutes };

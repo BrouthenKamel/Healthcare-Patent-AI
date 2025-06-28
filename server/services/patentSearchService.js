@@ -1,12 +1,10 @@
-import axios from 'axios';
-import dotenv from 'dotenv';
-
-dotenv.config();
+const axios = require('axios');
+require('dotenv').config();
 
 const SCRAPINGDOG_API_KEY = process.env.SCRAPINGDOG_API_KEY;
 const SCRAPINGDOG_URL = "https://api.scrapingdog.com/google_patents";
 
-export class PatentSearchService {
+class PatentSearchService {
   constructor(groqService, patentDatabase) {
     this.groqService = groqService;
     this.patentDatabase = patentDatabase;
@@ -139,3 +137,5 @@ export class PatentSearchService {
     }
   }
 }
+
+module.exports = { PatentSearchService };

@@ -5,19 +5,39 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-// Import routes
-const healthRoutes = require('./routes/healthRoutes');
-const patentRoutes = require('./routes/patentRoutes');
-const llmRoutes = require('./routes/llmRoutes');
-const statisticsRoutes = require('./routes/statisticsRoutes');
-
 // Import environment configuration
 const { config, validateEnvironment } = require('./config/environment');
+
+// Import services
+const { GroqService } = require('./services/groqService');
+const { PatentDatabase } = require('./services/patentDatabase');
+const { PatentSearchService } = require('./services/patentSearchService');
+
+// Import route creators
+const { createLLMRoutes } = require('./routes/llmRoutes');
+const { createPatentRoutes } = require('./routes/patentRoutes');
+const { createStatisticsRoutes } = require('./routes/statisticsRoutes');
+const healthRoutes = require('./routes/healthRoutes');
 
 const app = express();
 
 // Validate environment variables (but don't exit on failure)
 validateEnvironment();
+
+// Initialize services
+let groqService = null;
+let patentDatabase = null;
+let patentSearchService = null;
+
+try {
+  groqService = new GroqService();
+  patentDatabase = new PatentDatabase();
+  patentSearchService = new PatentSearchService(groqService, patentDatabase);
+  console.log('✅ Services initialized successfully');
+} catch (error) {
+  console.warn('⚠️  Some services failed to initialize:', error.message);
+  console.warn('API features may be limited');
+}
 
 // Middleware
 app.use(cors());
@@ -26,9 +46,24 @@ app.use(express.static(path.join(__dirname, '../dist')));
 
 // Routes
 app.use('/api', healthRoutes);
-app.use('/api', patentRoutes);
-app.use('/api', llmRoutes);
-app.use('/api', statisticsRoutes);
+
+// Only add routes if services are available
+if (groqService && patentDatabase && patentSearchService) {
+  app.use('/api', createPatentRoutes(patentSearchService, patentDatabase));
+  app.use('/api/llm', createLLMRoutes(groqService));
+  app.use('/api/statistics', createStatisticsRoutes(patentDatabase));
+} else {
+  // Fallback routes for when services are unavailable
+  app.use('/api/search-patents', (req, res) => {
+    res.status(503).json({ error: 'Patent search service unavailable', message: 'API keys not configured' });
+  });
+  app.use('/api/llm/*', (req, res) => {
+    res.status(503).json({ error: 'AI service unavailable', message: 'Groq API key not configured' });
+  });
+  app.use('/api/statistics', (req, res) => {
+    res.status(503).json({ error: 'Statistics service unavailable', message: 'Database not initialized' });
+  });
+}
 
 // Serve React app for all other routes
 app.get('*', (req, res) => {

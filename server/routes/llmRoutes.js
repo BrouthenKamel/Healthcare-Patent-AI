@@ -1,8 +1,8 @@
-import express from 'express';
+const express = require('express');
 
 const router = express.Router();
 
-export function createLLMRoutes(groqService) {
+function createLLMRoutes(groqService) {
   router.post('/commercialization-strategy', async (req, res) => {
     try {
       const { patent } = req.body;
@@ -31,3 +31,5 @@ export function createLLMRoutes(groqService) {
 
   return router;
 }
+
+module.exports = { createLLMRoutes };
